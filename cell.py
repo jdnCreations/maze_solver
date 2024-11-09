@@ -5,36 +5,55 @@ from graphics import Line, Point, Window
 
 
 class Cell:
-    def __init__(self, has_left_wall=True, has_right_wall=True, has_top_wall=True, has_bottom_wall=True, _x1=None, _x2=None, _y1=None, _y2=None, _win: Window = None):
-        self.has_left_wall = has_left_wall
-        self.has_right_wall = has_right_wall
-        self.has_top_wall = has_top_wall
-        self.has_bottom_wall = has_bottom_wall
-        self._x1 = _x1
-        self._x2 = _x2
-        self._y1 = _y1
-        self._y2 = _y2
-        self._win = _win
+    def __init__(self, win: Window = None):
+        self.has_left_wall = True
+        self.has_right_wall = True
+        self.has_top_wall = True
+        self.has_bottom_wall = True
+        self._x1 = None
+        self._x2 = None
+        self._y1 = None
+        self._y2 = None
+        self._win = win
+        self.visited = False
 
-    def draw(self, top_left_corner: Point, bottom_right_corner: Point):
+    def draw(self, x1, y1, x2, y2):
+        if self._win is None:
+            return
+        self._x1 = x1
+        self._x2 = x2
+        self._y1 = y1
+        self._y2 = y2
         if self.has_left_wall:
-            line = Line(top_left_corner, Point(
-                top_left_corner.x, bottom_right_corner.y))
-            self._win.draw_line(line, "red")
-        if self.has_right_wall:
-            line = Line(Point(bottom_right_corner.x,
-                        top_left_corner.y), bottom_right_corner)
-            self._win.draw_line(line, "blue")
+            line = Line(Point(x1, y1), Point(x1, y2))
+            self._win.draw_line(line)
+        else:
+            line = Line(Point(x1, y1), Point(x1, y2))
+            self._win.draw_line(line, "white")
         if self.has_top_wall:
-            line = Line(top_left_corner, Point(
-                bottom_right_corner.x, top_left_corner.y))
-            self._win.draw_line(line, "orange")
+            line = Line(Point(x1, y1), Point(x2, y1
+                                             ))
+            self._win.draw_line(line)
+        else:
+            line = Line(Point(x1, y1), Point(x2, y1))
+            self._win.draw_line(line, "white")
+        if self.has_right_wall:
+            line = Line(Point(x2, y1), Point(x2, y2))
+            self._win.draw_line(line)
+        else:
+            line = Line(Point(x2, y1), Point(x2, y2))
+            self._win.draw_line(line, "white")
+
         if self.has_bottom_wall:
-            line = Line(Point(top_left_corner.x,
-                        bottom_right_corner.y), bottom_right_corner)
-            self._win.draw_line(line, "green")
+            line = Line(Point(x1, y2), Point(x2, y2))
+            self._win.draw_line(line)
+        else:
+            line = Line(Point(x1, y2), Point(x2, y2))
+            self._win.draw_line(line, "white")
 
     def draw_move(self, to_cell, undo=False):
+        if self._win is None:
+            return
         color = "red"
         if undo:
             color = "gray"

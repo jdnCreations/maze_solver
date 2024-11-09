@@ -1,43 +1,106 @@
+from operator import pos
+import random
 from time import sleep
 from cell import Cell
 from graphics import Point
 
 
 class Maze:
-    def __init__(self, x1, y1, num_rows, num_cols, cell_size_x, cell_size_y, win=None):
-        self.x1 = x1
-        self.y1 = y1
-        self.num_rows = num_rows
-        self.num_cols = num_cols
-        self.cell_size_x = cell_size_x
-        self.cell_size_y = cell_size_y
-        self.win = win
+    def __init__(self, x1, y1, num_rows, num_cols, cell_size_x, cell_size_y, win=None, seed=None):
+        if type(num_rows) != int or type(num_cols) != int:
+            raise ValueError("Number of rows and columns must be integers.")
+        if num_rows <= 0 or num_cols <= 0:
+            raise ValueError(
+                "Number of rows and columns must be greater than 0.")
+        self._cells = []
+        self._x1 = x1
+        self._y1 = y1
+        self._num_rows = num_rows
+        self._num_cols = num_cols
+        self._cell_size_x = cell_size_x
+        self._cell_size_y = cell_size_y
+        self._win = win
+        if seed:
+            random.seed(seed)
         self._create_cells()
+        self._break_entrance_and_exit()
+        self._break_walls_r(0, 0)
+        self._reset_cells_visited()
 
     def _create_cells(self):
-        self._cells = []
-        for col in range(self.num_cols):
-            column = []
-            for row in range(self.num_rows):
-                cell = Cell(True, True, True, True,
-                            self.x1 + (col * self.cell_size_x),
-                            self.x1 + ((col + 1) * self.cell_size_x),
-                            self.y1 + (row * self.cell_size_y),
-                            self.y1 + ((row + 1) * self.cell_size_y),
-                            self.win)
-                column.append(cell)
+        for i in range(self._num_cols):
+            col_cells = []
+            for j in range(self._num_rows):
+                cell = Cell(self._win)
+                col_cells.append(cell)
+            self._cells.append(col_cells)
 
-            self._cells.append(column)
-
-        for col in range(self.num_cols):
-            for row in range(self.num_rows):
-                self._draw_cell(col, row)
-                self._animate()
+        for i in range(self._num_cols):
+            for j in range(self._num_rows):
+                self._draw_cell(i, j)
 
     def _draw_cell(self, i, j):
-        cell = self._cells[i][j]
-        cell.draw(Point(cell._x1, cell._y1), Point(cell._x2, cell._y2))
+        if self._win is None:
+            return
+        x1 = self._x1 + i * self._cell_size_x
+        y1 = self._y1 + j * self._cell_size_y
+        x2 = x1 + self._cell_size_x
+        y2 = y1 + self._cell_size_y
+        self._cells[i][j].draw(x1, y1, x2, y2)
+        self._animate()
 
     def _animate(self):
-        self.win.redraw()
+        if self._win is None:
+            return
+        self._win.redraw()
         sleep(0.05)
+
+    def _break_entrance_and_exit(self):
+        self._cells[0][0].has_top_wall = False
+        self._draw_cell(0, 0)
+        self._cells[self._num_cols - 1][self._num_rows -
+                                        1].has_bottom_wall = False
+        self._draw_cell(self._num_cols - 1, self._num_rows - 1)
+
+    def _break_walls_r(self, i, j):
+        self._cells[i][j].visited = True
+        while True:
+            possible_directions = []
+            # left
+            if i > 0 and not self._cells[i-1][j].visited:
+                possible_directions.append((i-1, j))
+            # right
+            if i < self._num_cols - 1 and not self._cells[i+1][j].visited:
+                possible_directions.append((i+1, j))
+            # up
+            if j > 0 and not self._cells[i][j-1].visited:
+                possible_directions.append((i, j-1))
+            # down
+            if j < self._num_rows - 1 and not self._cells[i][j+1].visited:
+                possible_directions.append((i, j+1))
+
+            if len(possible_directions) == 0:
+                self._draw_cell(i, j)
+                return
+
+            direction_index = random.randrange(len(possible_directions))
+            next_index = possible_directions[direction_index]
+            if next_index[0] == i + 1:
+                self._cells[i][j].has_right_wall = False
+                self._cells[i+1][j].has_left_wall = False
+            if next_index[0] == i - 1:
+                self._cells[i][j].has_left_wall = False
+                self._cells[i-1][j].has_right_wall = False
+            if next_index[1] == j + 1:
+                self._cells[i][j].has_bottom_wall = False
+                self._cells[i][j+1].has_top_wall = False
+            if next_index[1] == j - 1:
+                self._cells[i][j].has_top_wall = False
+                self._cells[i][j-1].has_bottom_wall = False
+
+            self._break_walls_r(next_index[0], next_index[1])
+
+    def _reset_cells_visited(self):
+        for row in self._cells:
+            for cell in row:
+                cell.visited = False
