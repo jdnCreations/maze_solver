@@ -6,9 +6,18 @@ from maze import Maze
 
 
 def main():
-    window = Window(800, 600)
+    width = 1920
+    height = 1080
+    window = Window(width, height)
 
-    maze = Maze(5, 5, 5, 5, 50, 50, window, 5)
+    rows = 10
+    cols = 10
+    cell_size_x = width / rows
+    cell_size_y = height / cols
+
+    maze = Maze(5, 5, rows, cols, cell_size_x, cell_size_y, window, 10)
+
+    maze.solve()
     window.wait_for_close()
 
 
